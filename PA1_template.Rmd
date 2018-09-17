@@ -7,14 +7,63 @@ output:
 
 
 ## Loading and preprocessing the data
+First, the package required for this analysis are loaded.
 
+```{r}
+require(dplyr)
+require(ggplot2)
+require(RColorBrewer)
+require(chron)
+```
+
+This assignment uses the [Activity monitoring data](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip). After making sure the file was downloaded and is present in the working directory, the following code loads the data into R.
+
+```{r}
+if (!exists("activity.csv")){
+    unzip("activity.zip")
+}
+data <- tbl_df(read.csv("activity.csv", header = TRUE))
+```
 
 
 ## What is mean total number of steps taken per day?
+The observations are grouped by date and the distributions of number of steps taken per day is computed along with the mean and median of this daily number of steps.
 
+```{r}
+stepsPerDay <- data %>% group_by(date) %>% summarize(totalSteps = sum(steps, na.rm = TRUE))
+meanSteps <- mean(stepsPerDay$totalSteps)
+medianSteps <- median(stepsPerDay$totalSteps)
+```
 
+The results are then plotted as follows:
+
+```{r}
+colors <- brewer.pal(5, "Set2")
+p1 <- ggplot(data = stepsPerDay, aes(x = totalSteps)) + 
+    geom_histogram(na.rm = TRUE, fill = colors[1], color = 1, bins = 10) + 
+    labs(title = "Distribution of the number of steps taken per day") +
+    labs(x = "Number of steps") + 
+    labs(y = "Count") +
+    geom_vline(xintercept = c(meanSteps, medianSteps), color = colors[2:3], lwd = c(2,2)) + 
+    annotate("text", x = c(meanSteps-2000, medianSteps+2000), y = c(16, 16), label = c("Mean", "Median"), color = colors[2:3], size = 8)
+print(p1)
+```
+
+As shown on the above histogram the __mean__ and __median__ number of steps taken per day are __`r round(meanSteps)`__ and __`r medianSteps`__ respectively.
 
 ## What is the average daily activity pattern?
+
+A typical step pattern for a day can computed and plotted with the following code:
+
+```{r}
+stepsPerInterval <- data %>% group_by(interval) %>% summarize(meanSteps = mean(steps, na.rm = TRUE))
+p2 <- ggplot(data = stepsPerInterval, aes(x = interval, y = meanSteps)) + 
+    geom_line(color = colors[4]) + 
+    labs(title = "Typical number of steps over the day") +
+    labs(x = "Minutes") + 
+    labs(y = "Number of steps")
+print(p2)
+```
 
 
 
