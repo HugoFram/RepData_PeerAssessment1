@@ -9,16 +9,60 @@ output:
 ## Loading and preprocessing the data
 First, the package required for this analysis are loaded.
 
-```{r results='hide'}
+
+```r
 require(dplyr)
+```
+
+```
+## Loading required package: dplyr
+```
+
+```
+## 
+## Attaching package: 'dplyr'
+```
+
+```
+## The following objects are masked from 'package:stats':
+## 
+##     filter, lag
+```
+
+```
+## The following objects are masked from 'package:base':
+## 
+##     intersect, setdiff, setequal, union
+```
+
+```r
 require(ggplot2)
+```
+
+```
+## Loading required package: ggplot2
+```
+
+```r
 require(RColorBrewer)
+```
+
+```
+## Loading required package: RColorBrewer
+```
+
+```r
 require(hms)
+```
+
+```
+## Loading required package: hms
 ```
 
 This assignment uses the [Activity monitoring data](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip). After making sure the file was downloaded and is present in the working directory, the following code loads the data into R.
 
-```{r}
+
+```r
 if (!exists("activity.csv")){
     unzip("activity.zip")
 }
@@ -29,7 +73,8 @@ data <- tbl_df(read.csv("activity.csv", header = TRUE))
 ## What is mean total number of steps taken per day?
 The observations are grouped by date and the distribution of number of steps taken per day is computed along with the mean and median of this daily number of steps.
 
-```{r}
+
+```r
 stepsPerDay <- data %>% 
     group_by(date) %>% 
     summarize(totalSteps = sum(steps, na.rm = TRUE))
@@ -39,7 +84,8 @@ medianSteps <- median(stepsPerDay$totalSteps)
 
 The results are then plotted as follows:
 
-```{r}
+
+```r
 colors <- brewer.pal(5, "Set2")
 p1 <- ggplot(data = stepsPerDay, aes(x = totalSteps)) + 
     geom_histogram(na.rm = TRUE, fill = colors[1], color = 1, bins = 10) + 
@@ -51,13 +97,16 @@ p1 <- ggplot(data = stepsPerDay, aes(x = totalSteps)) +
 print(p1)
 ```
 
-As shown on the above histogram the __mean__ and __median__ number of steps taken per day are __`r round(meanSteps)`__ and __`r medianSteps`__ respectively.
+![](PA1_template_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
+
+As shown on the above histogram the __mean__ and __median__ number of steps taken per day are __9354__ and __10395__ respectively.
 
 ## What is the average daily activity pattern?
 
 A typical step pattern for a day can computed and plotted with the following code:
 
-```{r}
+
+```r
 stepsPerInterval <- data %>% 
     group_by(interval) %>% 
     summarize(meanSteps = mean(steps, na.rm = TRUE), 
@@ -70,20 +119,26 @@ p2 <- ggplot(data = stepsPerInterval, aes(x = time, y = meanSteps)) +
     labs(x = "Time") + 
     labs(y = "Number of steps")
 print(p2)
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
+
+```r
 maxSteps <- as.character(round(max(stepsPerInterval$meanSteps)))
 bestStartTime <- as.character(stepsPerInterval$time[which.max(stepsPerInterval$meanSteps)-1])
 bestEndTime <- as.character(stepsPerInterval$time[which.max(stepsPerInterval$meanSteps)])
 ```
 
-On average, the 5-minutes interval during which people take the more steps is between __`r bestStartTime`__ and __`r bestEndTime`__ where __`r maxSteps`__ are taken.
+On average, the 5-minutes interval during which people take the more steps is between __08:30:00__ and __08:35:00__ where __206__ are taken.
 
 ## Imputing missing values
 
-In this dataset __`r sum(sapply(data, function(x) sum(is.na(x))))`__ observations have missing values. That is, `r sum(sapply(data, function(x) sum(is.na(x))))` observations are not fully characterized. This represents `r round(sum(sapply(data, function(x) sum(is.na(x)))) / dim(data)[1] * 100, 2)`% of the observations. 
+In this dataset __2304__ observations have missing values. That is, 2304 observations are not fully characterized. This represents 13.11% of the observations. 
 
 Since this value is relatively important, we suggest to fill these missing values with the average number of steps for the current time interval over the other days. 
 
-```{r}
+
+```r
 imputedData <- data
 for(row in seq_len(dim(data)[1])) {
     if(is.na(data$steps[row])) {
@@ -94,7 +149,8 @@ for(row in seq_len(dim(data)[1])) {
 
 Now that the missing values were imputed, we can plot again the distribution of number of steps taken per day and compare it with the one we had obtained before removing the missing values.
 
-```{r}
+
+```r
 stepsPerDay <- imputedData %>% 
     group_by(date) %>% 
     summarize(totalSteps = sum(steps, na.rm = TRUE))
@@ -112,7 +168,9 @@ p3 <- ggplot(data = stepsPerDay, aes(x = totalSteps)) +
 print(p3)
 ```
 
-The __mean__ and __median__ number of steps taken per day are __`r paste(round(meanSteps))`__ and __`r paste(round(medianSteps))`__ respectively.
+![](PA1_template_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
+
+The __mean__ and __median__ number of steps taken per day are __10766__ and __10766__ respectively.
 
 We notice here that this distribution is more gathered aroung the mean which makes perfect sense since all the previously missing values were imputed as being the mean of the existing values which therefore increases the number of observations around the mean.
 
@@ -120,8 +178,16 @@ We notice here that this distribution is more gathered aroung the mean which mak
 
 To answer this question, we will start by classifying days betweend weekdays and weekend day.
 
-```{r}
+
+```r
 Sys.setlocale("LC_TIME", "English")
+```
+
+```
+## [1] "English_United States.1252"
+```
+
+```r
 stepsPerInterval <- imputedData %>% 
     mutate(dayType = ifelse(weekdays(as.Date(as.character(date))) %in% c("Saturday", "Sunday"), "weekend", "weekday")) %>% 
     group_by(interval, dayType) %>% 
@@ -135,8 +201,10 @@ colors <- brewer.pal(5, "Set2")
 p4 <- ggplot(data = stepsPerInterval, aes(x = time, y = meanSteps)) + 
     geom_line(color = colors[4]) + 
     facet_grid(rows = vars(dayType)) +
-    labs(title = "Comparison between number of steps during weekdays and weekends") +
+    labs(title = "Comparison betwee number of steps during weekdays and weekends") +
     labs(x = "Time") + 
     labs(y = "Number of steps")
 print(p4)
 ```
+
+![](PA1_template_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
